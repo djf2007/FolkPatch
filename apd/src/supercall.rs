@@ -399,7 +399,7 @@ fn revoked_uids(current: &[uid_t], configs: &[PackageConfig]) -> Vec<uid_t> {
     current
         .iter()
         .copied()
-        .filter(|uid| *uid != 0 && *uid != 2000 && !retained.contains(uid))
+        .filter(|uid| *uid != 0 && !retained.contains(uid))
         .collect()
 }
 
@@ -963,19 +963,22 @@ mod tests {
     }
 
     #[test]
-    fn retains_granted_and_critical_uids_only() {
+    fn revokes_shell_and_ungranted_uids_but_retains_explicit_grants() {
         let granted = config("example", 10123, 1, 0);
         let current = [0, 2000, 10123, 110123, 10456];
         assert_eq!(
             revoked_uids(&current, std::slice::from_ref(&granted)),
-            vec![110123, 10456]
+            vec![2000, 110123, 10456]
         );
         let denied = config("example", 10123, 0, 1);
         assert_eq!(
             revoked_uids(&current, &[denied]),
-            vec![10123, 110123, 10456]
+            vec![2000, 10123, 110123, 10456]
         );
-        assert_eq!(revoked_uids(&current, &[]), vec![10123, 110123, 10456]);
+        assert_eq!(
+            revoked_uids(&current, &[]),
+            vec![2000, 10123, 110123, 10456]
+        );
     }
 
     #[test]
